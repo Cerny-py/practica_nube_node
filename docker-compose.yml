@@ -2,12 +2,12 @@ name: biblioteca-app
 services:
   app:
     build: ./app
-    container_name: red_biblioteca
+    container_name: biblioteca
     ports:
       - "8080:3000"
     networks:
-      - red_biblioteca
-      - red_db
+      - red-biblioteca
+      - red-db
     environment:
       DB_HOST: db
       DB_USER: user
@@ -24,7 +24,7 @@ services:
       start_period: 5s
   db:
     image: mariadb:11.4
-    container_name: red_db
+    container_name: db
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_DATABASE: biblioteca_db
@@ -39,5 +39,13 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    networks:
+      - red-db
+networks:
+  red-biblioteca:
+    driver: bridge
+  red-db:
+    driver: bridge
+
 volumes:
   datos-db:
