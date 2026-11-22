@@ -2,8 +2,12 @@ name: biblioteca-app
 services:
   app:
     build: ./app
+    container_name: red_biblioteca
     ports:
       - "8080:3000"
+    networks:
+      - red_biblioteca
+      - red_db
     environment:
       DB_HOST: db
       DB_USER: user
@@ -12,4 +16,28 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8080').then(async r => process.exit(r.ok && (await r.text()).includes('id=\\\"total\\\"') ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  db:
+    image: mariadb:11.4
+    container_name: red_db
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: biblioteca_db
+      MARIADB_USER: user
+      MARIADB_PASSWORD: app123
+    volumes:
+      - datos-db:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -proot && mariadb -uroot -proot -e 'SELECT 1 FROM biblioteca_db.libros LIMIT 1;'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+volumes:
+  datos-db:
